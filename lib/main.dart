@@ -20,7 +20,7 @@ class ChatScreen extends StatefulWidget {
   State createState() => new ChatScreenState();
 }
   
-class ChatScreenState extends State<ChatScreen>{
+class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin{
   final List<ChatMessage> _messages = <ChatMessage>[];
   final TextEditingController _textController = new TextEditingController();
   @override
@@ -73,27 +73,44 @@ class ChatScreenState extends State<ChatScreen>{
       ),
     ),
   );
+
+  @override
+  void dispose() {                                                  
+    for (ChatMessage message in _messages)                          
+      message.animationController.dispose();                        
+    super.dispose();                                                
+  } 
 }
 
   void _handleSubmitted(String text) {
     _textController.clear();
     ChatMessage message = new ChatMessage(                         
-      text: text,                                                  
+      text: text,    
+      animationController: new AnimationController(
+        duration: new Duration(milliseconds: 1000),
+        vsync: this,
+      ),                                              
     );                                                             
     setState(() {                                                  
       _messages.insert(0, message);                                
     });
+    message.animationController.forward();
   }
 }
 
 const String _name = "Your Name";
 class ChatMessage extends StatelessWidget{
   final String text;
-  ChatMessage({this.text});
+  final AnimationController animationController;
+  ChatMessage({this.text, this.animationController});
 
   @override
   Widget build(BuildContext context) {
-    return new Container(
+    return new SizeTransition(                                    
+    sizeFactor: new CurvedAnimation(                        
+        parent: animationController, curve: Curves.easeOut),
+    axisAlignment: 0.0,                                     
+    child: new Container( 
       margin: const EdgeInsets.symmetric(vertical: 10.0),
       child: new Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +131,7 @@ class ChatMessage extends StatelessWidget{
           )
         ],
       ),
+    )
     );
   }
 
